@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Info</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d2e;
+      --surface2: #242740;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border: #2d3155;
+      --card-radius: 14px;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 1.2rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    header p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .consent-badge {
+      margin-left: auto;
+      padding: 0.3rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .consent-badge.granted {
+      background: rgba(16,185,129,0.15);
+      color: var(--success);
+      border: 1px solid rgba(16,185,129,0.3);
+    }
+
+    .consent-badge.denied {
+      background: rgba(245,158,11,0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245,158,11,0.3);
+    }
+
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 1.25rem 0.85rem 5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.9rem 1rem 0.7rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-icon {
+      font-size: 1.15rem;
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+
+    .info-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: right;
+      word-break: break-all;
+      max-width: 65%;
+    }
+
+    .info-value.mono {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.78rem;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(108,99,255,0.2);
+      color: #a5a0ff;
+    }
+
+    .loading-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.2s infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    /* GDPR Banner */
+    #gdpr-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: var(--surface2);
+      border-top: 2px solid var(--accent);
+      padding: 1.1rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    #gdpr-banner h2 {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    #gdpr-banner p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    #gdpr-banner a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .gdpr-actions {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.7rem 1rem;
+      border-radius: 9px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn:hover { opacity: 0.9; }
+
+    /* Manage preferences modal */
+    #pref-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0,0,0,0.65);
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    #pref-modal.open { display: flex; }
+
+    .pref-sheet {
+      background: var(--surface2);
+      border-radius: 18px 18px 0 0;
+      padding: 1.4rem 1.1rem 2rem;
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .pref-sheet h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .pref-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pref-row:last-of-type { border-bottom: none; }
+
+    .pref-info { flex: 1; }
+    .pref-info strong { font-size: 0.88rem; display: block; margin-bottom: 0.2rem; }
+    .pref-info span { font-size: 0.78rem; color: var(--text-muted); }
+
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.25s;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      left: 3px;
+      top: 3px;
+      transition: transform 0.25s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+    .toggle input:disabled + .toggle-slider { opacity: 0.5; cursor: not-allowed; }
+
+    @media (min-width: 520px) {
+      #gdpr-banner { flex-direction: row; align-items: center; flex-wrap: wrap; }
+      #gdpr-banner > div:first-child { flex: 1; }
+      .gdpr-actions { flex-wrap: nowrap; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-icon">🔍</div>
+  <div>
+    <h1>Client Info</h1>
+    <p>Your device &amp; network snapshot</p>
+  </div>
+  <span id="consent-badge" class="consent-badge denied">Analytics: off</span>
+</header>
+
+<main>
+
+  <!-- Network / IP -->
+  <div>
+    <div class="section-title">Network</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🌐</span><span class="card-title">IP &amp; Location</span></div>
+      <div class="info-row"><span class="info-label">Public IP</span><span class="info-value mono" id="ip"><span class="loading-dot"></span></span></div>
+      <div class="info-row"><span class="info-label">Hostname / ISP</span><span class="info-value" id="isp"><span class="loading-dot"></span></span></div>
+      <div class="info-row"><span class="info-label">Country</span><span class="info-value" id="country"><span class="loading-dot"></span></span></div>
+      <div class="info-row"><span class="info-label">Region / City</span><span class="info-value" id="city"><span class="loading-dot"></span></span></div>
+      <div class="info-row"><span class="info-label">Timezone</span><span class="info-value" id="timezone"><span class="loading-dot"></span></span></div>
+      <div class="info-row"><span class="info-label">Coordinates</span><span class="info-value mono" id="coords"><span class="loading-dot"></span></span></div>
+    </div>
+  </div>
+
+  <!-- Connection -->
+  <div>
+    <div class="section-title">Connectivity</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">📡</span><span class="card-title">Connection</span></div>
+      <div class="info-row"><span class="info-label">Type</span><span class="info-value" id="net-type">—</span></div>
+      <div class="info-row"><span class="info-label">Effective Type</span><span class="info-value" id="net-eff">—</span></div>
+      <div class="info-row"><span class="info-label">Downlink</span><span class="info-value" id="net-dl">—</span></div>
+      <div class="info-row"><span class="info-label">Round-trip time</span><span class="info-value" id="net-rtt">—</span></div>
+      <div class="info-row"><span class="info-label">Data Saver</span><span class="info-value" id="net-save">—</span></div>
+      <div class="info-row"><span class="info-label">Online</span><span class="info-value" id="net-online">—</span></div>
+    </div>
+  </div>
+
+  <!-- Browser -->
+  <div>
+    <div class="section-title">Browser</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🧭</span><span class="card-title">Browser &amp; Engine</span></div>
+      <div class="info-row"><span class="info-label">Browser</span><span class="info-value" id="browser-name">—</span></div>
+      <div class="info-row"><span class="info-label">Version</span><span class="info-value mono" id="browser-ver">—</span></div>
+      <div class="info-row"><span class="info-label">Engine</span><span class="info-value" id="browser-engine">—</span></div>
+      <div class="info-row"><span class="info-label">Language</span><span class="info-value" id="browser-lang">—</span></div>
+      <div class="info-row"><span class="info-label">Languages</span><span class="info-value" id="browser-langs">—</span></div>
+      <div class="info-row"><span class="info-label">Cookies enabled</span><span class="info-value" id="cookies">—</span></div>
+      <div class="info-row"><span class="info-label">Do Not Track</span><span class="info-value" id="dnt">—</span></div>
+      <div class="info-row"><span class="info-label">User Agent</span><span class="info-value mono" id="ua" style="font-size:0.7rem;max-width:75%">—</span></div>
+    </div>
+  </div>
+
+  <!-- OS / Platform -->
+  <div>
+    <div class="section-title">Operating System</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">💻</span><span class="card-title">Platform</span></div>
+      <div class="info-row"><span class="info-label">OS</span><span class="info-value" id="os">—</span></div>
+      <div class="info-row"><span class="info-label">Platform</span><span class="info-value" id="platform">—</span></div>
+      <div class="info-row"><span class="info-label">Architecture</span><span class="info-value" id="arch">—</span></div>
+      <div class="info-row"><span class="info-label">Device type</span><span class="info-value" id="device-type">—</span></div>
+    </div>
+  </div>
+
+  <!-- Hardware -->
+  <div>
+    <div class="section-title">Hardware</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">⚙️</span><span class="card-title">Device &amp; Display</span></div>
+      <div class="info-row"><span class="info-label">CPU Threads</span><span class="info-value" id="cpu">—</span></div>
+      <div class="info-row"><span class="info-label">Device Memory</span><span class="info-value" id="memory">—</span></div>
+      <div class="info-row"><span class="info-label">GPU Vendor</span><span class="info-value" id="gpu-vendor">—</span></div>
+      <div class="info-row"><span class="info-label">GPU Renderer</span><span class="info-value" id="gpu-renderer" style="font-size:0.72rem;max-width:65%">—</span></div>
+      <div class="info-row"><span class="info-label">Screen Resolution</span><span class="info-value mono" id="screen-res">—</span></div>
+      <div class="info-row"><span class="info-label">Viewport</span><span class="info-value mono" id="viewport">—</span></div>
+      <div class="info-row"><span class="info-label">Device Pixel Ratio</span><span class="info-value" id="dpr">—</span></div>
+      <div class="info-row"><span class="info-label">Color Depth</span><span class="info-value" id="color-depth">—</span></div>
+      <div class="info-row"><span class="info-label">Touch Points</span><span class="info-value" id="touch">—</span></div>
+      <div class="info-row"><span class="info-label">Orientation</span><span class="info-value" id="orientation">—</span></div>
+    </div>
+  </div>
+
+  <!-- Capabilities -->
+  <div>
+    <div class="section-title">Browser Capabilities</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🛡️</span><span class="card-title">APIs &amp; Features</span></div>
+      <div class="info-row"><span class="info-label">WebGL</span><span class="info-value" id="cap-webgl">—</span></div>
+      <div class="info-row"><span class="info-label">WebRTC</span><span class="info-value" id="cap-webrtc">—</span></div>
+      <div class="info-row"><span class="info-label">Service Worker</span><span class="info-value" id="cap-sw">—</span></div>
+      <div class="info-row"><span class="info-label">Web Bluetooth</span><span class="info-value" id="cap-bt">—</span></div>
+      <div class="info-row"><span class="info-label">Web USB</span><span class="info-value" id="cap-usb">—</span></div>
+      <div class="info-row"><span class="info-label">Battery API</span><span class="info-value" id="cap-battery">—</span></div>
+      <div class="info-row"><span class="info-label">Geolocation</span><span class="info-value" id="cap-geo">—</span></div>
+      <div class="info-row"><span class="info-label">Notifications</span><span class="info-value" id="cap-notif">—</span></div>
+    </div>
+  </div>
+
+  <!-- Time -->
+  <div>
+    <div class="section-title">Time</div>
+    <div class="card">
+      <div class="card-header"><span class="card-icon">🕐</span><span class="card-title">Date &amp; Time</span></div>
+      <div class="info-row"><span class="info-label">Local Time</span><span class="info-value mono" id="local-time">—</span></div>
+      <div class="info-row"><span class="info-label">UTC Offset</span><span class="info-value" id="utc-offset">—</span></div>
+      <div class="info-row"><span class="info-label">Timezone (IANA)</span><span class="info-value" id="tz-iana">—</span></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- GDPR Banner -->
+<div id="gdpr-banner" role="dialog" aria-label="Privacy preferences" aria-modal="true">
+  <div>
+    <h2>🍪 Manage Privacy Preferences</h2>
+    <p>
+      We use <strong>Google Analytics</strong> to understand how this page is used.
+      This involves collecting your IP address, browser, device, and session data.
+      By accepting you consent to this data being processed in accordance with
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>
+      and the <strong>GDPR</strong>. You may change your choice at any time by tapping the badge in the header.
+    </p>
+  </div>
+  <div class="gdpr-actions">
+    <button class="btn btn-secondary" id="btn-manage">Manage preferences</button>
+    <button class="btn btn-secondary" id="btn-deny">Decline</button>
+    <button class="btn btn-primary" id="btn-accept">Accept all</button>
+  </div>
+</div>
+
+<!-- Preferences Modal -->
+<div id="pref-modal" role="dialog" aria-label="Detailed privacy preferences" aria-modal="true">
+  <div class="pref-sheet">
+    <h3>Privacy Preferences</h3>
+
+    <div class="pref-row">
+      <div class="pref-info">
+        <strong>Strictly Necessary</strong>
+        <span>Required for the page to function. Cannot be disabled.</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked disabled />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="pref-row">
+      <div class="pref-info">
+        <strong>Analytics (Google Analytics)</strong>
+        <span>Helps us understand page usage via IP, browser, device &amp; session data. Data is sent to Google LLC and processed under GDPR Article 6(1)(a).</span>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="toggle-analytics" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div style="display:flex;gap:0.65rem;flex-wrap:wrap;margin-top:0.3rem;">
+      <button class="btn btn-secondary" id="btn-pref-cancel" style="flex:0 0 auto">Cancel</button>
+      <button class="btn btn-primary" id="btn-pref-save" style="flex:1">Save preferences</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google Analytics (GA4) – loaded only after consent -->
+<script>
+  // ─── GA4 Configuration ────────────────────────────────────────────────────
+  // TODO: Replace "G-XXXXXXXXXX" with your actual Google Analytics 4 Measurement ID
+  // before deploying. Find it in GA4 → Admin → Data Streams → your stream.
+  const GA_MEASUREMENT_ID = "G-XXXXXXXXXX";
+
+  // ─── Consent Management ───────────────────────────────────────────────────
+  const CONSENT_KEY = "clientinfo_consent";
+
+  function getConsent() {
+    try { return localStorage.getItem(CONSENT_KEY); } catch { return null; }
+  }
+
+  function setConsent(val) {
+    try { localStorage.setItem(CONSENT_KEY, val); } catch {}
+  }
+
+  function updateBadge(granted) {
+    const b = document.getElementById("consent-badge");
+    if (granted) {
+      b.textContent = "Analytics: on";
+      b.className = "consent-badge granted";
+    } else {
+      b.textContent = "Analytics: off";
+      b.className = "consent-badge denied";
+    }
+  }
+
+  function loadGA() {
+    if (window._gaLoaded) return;
+    window._gaLoaded = true;
+    const s = document.createElement("script");
+    s.async = true;
+    s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_MEASUREMENT_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag("js", new Date());
+    gtag("config", GA_MEASUREMENT_ID, {
+      anonymize_ip: true,
+      allow_google_signals: true,
+    });
+    window._gtag = gtag;
+  }
+
+  function sendAnalyticsEvent(name, params) {
+    if (!window._gaLoaded || !window._gtag) return;
+    window._gtag("event", name, params);
+  }
+
+  function applyConsent(granted, skipBanner) {
+    setConsent(granted ? "granted" : "denied");
+    updateBadge(granted);
+    if (!skipBanner) document.getElementById("gdpr-banner").style.display = "none";
+    if (granted) {
+      loadGA();
+      // GA4 will collect the client info automatically; we also send a custom event.
+      window.addEventListener("clientInfoReady", function(e) {
+        sendAnalyticsEvent("client_info_collected", e.detail);
+      }, { once: true });
+    }
+  }
+
+  // ─── Banner logic ─────────────────────────────────────────────────────────
+  const stored = getConsent();
+  if (stored !== null) {
+    // Already decided – hide banner
+    document.getElementById("gdpr-banner").style.display = "none";
+    applyConsent(stored === "granted", true);
+  }
+
+  document.getElementById("btn-accept").addEventListener("click", () => applyConsent(true));
+  document.getElementById("btn-deny").addEventListener("click", () => applyConsent(false));
+
+  document.getElementById("btn-manage").addEventListener("click", () => {
+    const modal = document.getElementById("pref-modal");
+    const saved = getConsent();
+    document.getElementById("toggle-analytics").checked = saved === "granted";
+    modal.classList.add("open");
+  });
+
+  // Allow re-opening preferences via header badge
+  document.getElementById("consent-badge").addEventListener("click", () => {
+    const modal = document.getElementById("pref-modal");
+    document.getElementById("toggle-analytics").checked = getConsent() === "granted";
+    modal.classList.add("open");
+    document.getElementById("gdpr-banner").style.display = "none";
+  });
+
+  document.getElementById("btn-pref-cancel").addEventListener("click", () => {
+    document.getElementById("pref-modal").classList.remove("open");
+  });
+
+  document.getElementById("btn-pref-save").addEventListener("click", () => {
+    const analytics = document.getElementById("toggle-analytics").checked;
+    applyConsent(analytics);
+    document.getElementById("pref-modal").classList.remove("open");
+  });
+
+  // Close modal on backdrop click
+  document.getElementById("pref-modal").addEventListener("click", (e) => {
+    if (e.target === document.getElementById("pref-modal")) {
+      document.getElementById("pref-modal").classList.remove("open");
+    }
+  });
+
+  // ─── Client Info Collection ───────────────────────────────────────────────
+  function yn(val) { return val ? "✅ Yes" : "❌ No"; }
+  function dash(v) { return (v !== undefined && v !== null && v !== "") ? v : "—"; }
+
+  // Browser detection
+  function detectBrowser(ua) {
+    const browsers = [
+      { name: "Edge", re: /Edg\/(\S+)/ },
+      { name: "Chrome", re: /Chrome\/(\S+)/ },
+      { name: "Firefox", re: /Firefox\/(\S+)/ },
+      { name: "Safari", re: /Version\/(\S+).*Safari/ },
+      { name: "Opera", re: /OPR\/(\S+)/ },
+      { name: "IE", re: /Trident.*rv:(\S+)/ },
+    ];
+    for (const b of browsers) {
+      const m = ua.match(b.re);
+      if (m) return { name: b.name, version: m[1].split(" ")[0] };
+    }
+    return { name: "Unknown", version: "—" };
+  }
+
+  function detectEngine(ua) {
+    if (/Gecko\//.test(ua) && /Firefox/.test(ua)) return "Gecko";
+    if (/AppleWebKit\//.test(ua)) return "WebKit / Blink";
+    if (/Trident\//.test(ua)) return "Trident";
+    return "Unknown";
+  }
+
+  function detectOS(ua) {
+    if (/Windows NT 10/.test(ua)) return "Windows 10 / 11";
+    if (/Windows NT 6\.3/.test(ua)) return "Windows 8.1";
+    if (/Windows NT 6\.2/.test(ua)) return "Windows 8";
+    if (/Windows NT 6\.1/.test(ua)) return "Windows 7";
+    if (/Windows/.test(ua)) return "Windows";
+    if (/Mac OS X/.test(ua)) {
+      const m = ua.match(/Mac OS X ([0-9_]+)/);
+      return "macOS " + (m ? m[1].replace(/_/g, ".") : "");
+    }
+    if (/Android/.test(ua)) {
+      const m = ua.match(/Android ([0-9.]+)/);
+      return "Android " + (m ? m[1] : "");
+    }
+    if (/iPhone|iPad/.test(ua)) {
+      const m = ua.match(/OS ([0-9_]+)/);
+      return "iOS " + (m ? m[1].replace(/_/g, ".") : "");
+    }
+    if (/Linux/.test(ua)) return "Linux";
+    return "Unknown";
+  }
+
+  function detectDeviceType() {
+    const ua = navigator.userAgent;
+    if (/Mobi|Android/i.test(ua)) return "📱 Mobile";
+    if (/Tablet|iPad/i.test(ua)) return "📟 Tablet";
+    return "🖥️ Desktop";
+  }
+
+  function detectArch(ua) {
+    if (/x64|WOW64|Win64/.test(ua)) return "x86_64 (64-bit)";
+    if (/arm64|aarch64/i.test(ua)) return "ARM64";
+    if (/armv/.test(ua)) return "ARM";
+    if (/i686|i386/.test(ua)) return "x86 (32-bit)";
+    return "Unknown";
+  }
+
+  function getGPUInfo() {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+      if (!gl) return { vendor: "—", renderer: "—" };
+      const ext = gl.getExtension("WEBGL_debug_renderer_info");
+      if (!ext) return { vendor: dash(gl.getParameter(gl.VENDOR)), renderer: dash(gl.getParameter(gl.RENDERER)) };
+      return {
+        vendor: dash(gl.getParameter(ext.UNMASKED_VENDOR_WEBGL)),
+        renderer: dash(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)),
+      };
+    } catch { return { vendor: "—", renderer: "—" }; }
+  }
+
+  // Populate synchronous info immediately
+  function populateSync() {
+    const ua = navigator.userAgent;
+    const browser = detectBrowser(ua);
+
+    setText("browser-name", browser.name);
+    setText("browser-ver", browser.version);
+    setText("browser-engine", detectEngine(ua));
+    setText("browser-lang", dash(navigator.language));
+    setText("browser-langs", dash((navigator.languages || []).join(", ")));
+    setText("cookies", yn(navigator.cookieEnabled));
+    setText("dnt", navigator.doNotTrack === "1" ? "Enabled" : navigator.doNotTrack === "0" ? "Disabled" : "Not set");
+    setText("ua", ua);
+
+    setText("os", detectOS(ua));
+    setText("platform", dash(navigator.platform));
+    setText("arch", detectArch(ua));
+    setText("device-type", detectDeviceType());
+
+    const gpu = getGPUInfo();
+    setText("gpu-vendor", gpu.vendor);
+    setText("gpu-renderer", gpu.renderer);
+    const cpuThreads = navigator.hardwareConcurrency;
+    setText("cpu", cpuThreads ? cpuThreads + " logical cores" : "Not available");
+    const mem = navigator.deviceMemory;
+    setText("memory", mem ? mem + " GB (approx)" : "Not available");
+
+    setText("screen-res", screen.width + " × " + screen.height + " px");
+    setText("viewport", window.innerWidth + " × " + window.innerHeight + " px");
+    setText("dpr", window.devicePixelRatio || "1");
+    setText("color-depth", screen.colorDepth + "-bit");
+    setText("touch", navigator.maxTouchPoints || "0");
+    const ori = screen.orientation;
+    setText("orientation", ori ? ori.type : (window.innerWidth > window.innerHeight ? "landscape" : "portrait"));
+
+    // Capabilities
+    setText("cap-webgl", yn(!!(document.createElement("canvas").getContext("webgl"))));
+    setText("cap-webrtc", yn(!!(window.RTCPeerConnection || window.webkitRTCPeerConnection)));
+    setText("cap-sw", yn("serviceWorker" in navigator));
+    setText("cap-bt", yn("bluetooth" in navigator));
+    setText("cap-usb", yn("usb" in navigator));
+    setText("cap-battery", yn("getBattery" in navigator));
+    setText("cap-geo", yn("geolocation" in navigator));
+    setText("cap-notif", yn("Notification" in window));
+
+    // Connection
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn) {
+      setText("net-type", dash(conn.type));
+      setText("net-eff", dash(conn.effectiveType));
+      setText("net-dl", conn.downlink !== undefined ? conn.downlink + " Mbps" : "—");
+      setText("net-rtt", conn.rtt !== undefined ? conn.rtt + " ms" : "—");
+      setText("net-save", yn(conn.saveData));
+    }
+    setText("net-online", yn(navigator.onLine));
+
+    // Time
+    const now = new Date();
+    setText("local-time", now.toLocaleString());
+    const off = -now.getTimezoneOffset();
+    const offH = Math.floor(Math.abs(off) / 60);
+    const offM = Math.abs(off) % 60;
+    const offStr = (off >= 0 ? "+" : "-") + String(offH).padStart(2, "0") + ":" + String(offM).padStart(2, "0");
+    setText("utc-offset", "UTC" + offStr);
+    try {
+      setText("tz-iana", Intl.DateTimeFormat().resolvedOptions().timeZone);
+    } catch { setText("tz-iana", "—"); }
+
+    return {
+      browser: browser.name,
+      browser_version: browser.version,
+      os: detectOS(ua),
+      device_type: detectDeviceType(),
+      screen: screen.width + "x" + screen.height,
+      language: navigator.language,
+      cpu_threads: navigator.hardwareConcurrency,
+      device_memory_gb: navigator.deviceMemory,
+    };
+  }
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(val ?? "—");
+  }
+
+  async function populateIP() {
+    try {
+      const res = await fetch("https://ipapi.co/json/", { mode: "cors" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const d = await res.json();
+      setText("ip", d.ip || "—");
+      setText("isp", [d.org, d.asn].filter(Boolean).join(" · ") || "—");
+      setText("country", [d.country_name, d.country_code].filter(Boolean).join(" · ") || "—");
+      setText("city", [d.region, d.city].filter(Boolean).join(" / ") || "—");
+      setText("timezone", d.timezone || "—");
+      if (d.latitude && d.longitude) {
+        setText("coords", d.latitude.toFixed(4) + ", " + d.longitude.toFixed(4));
+      } else {
+        setText("coords", "—");
+      }
+      return { ip: d.ip, country: d.country_code, city: d.city, isp: d.org };
+    } catch {
+      setText("ip", "Unavailable");
+      setText("isp", "—");
+      setText("country", "—");
+      setText("city", "—");
+      setText("timezone", "—");
+      setText("coords", "—");
+      return {};
+    }
+  }
+
+  // Run everything
+  (async function init() {
+    const syncInfo = populateSync();
+    const ipInfo = await populateIP();
+
+    // Fire a custom event with all collected data (used by GA handler)
+    const allInfo = Object.assign({}, syncInfo, ipInfo);
+    window.dispatchEvent(new CustomEvent("clientInfoReady", { detail: allInfo }));
+  })();
+
+  // Live clock
+  setInterval(() => {
+    const now = new Date();
+    setText("local-time", now.toLocaleString());
+    const off = -now.getTimezoneOffset();
+    const offH = Math.floor(Math.abs(off) / 60);
+    const offM = Math.abs(off) % 60;
+    setText("utc-offset", "UTC" + (off >= 0 ? "+" : "-") + String(offH).padStart(2, "0") + ":" + String(offM).padStart(2, "0"));
+    setText("viewport", window.innerWidth + " × " + window.innerHeight + " px");
+  }, 1000);
+</script>
+</body>
+</html>
