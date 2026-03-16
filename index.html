@@ -5,8 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Client Info</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    @font-face {
+      font-family: 'UnifrakturMaguntia';
+      font-style: normal;
+      font-weight: 400;
+      src: url(goth.woff2) format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
 
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .btn, h1, .card-title{
+      font-family: 'UnifrakturMaguntia', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
     :root {
       --bg: #0f1117;
       --surface: #1a1d2e;
@@ -28,6 +38,7 @@
       font-size: 15px;
       line-height: 1.6;
       min-height: 100vh;
+      
     }
 
     header {
@@ -239,7 +250,7 @@
     .btn:active { transform: scale(0.97); }
 
     .btn-primary {
-      background: var(--accent);
+      background: var(--success);
       color: #fff;
     }
 
@@ -329,7 +340,6 @@
     .toggle input:disabled + .toggle-slider { opacity: 0.5; cursor: not-allowed; }
 
     @media (min-width: 520px) {
-      #gdpr-banner { flex-direction: row; align-items: center; flex-wrap: wrap; }
       #gdpr-banner > div:first-child { flex: 1; }
       .gdpr-actions { flex-wrap: nowrap; }
     }
@@ -339,10 +349,8 @@
 
 <!-- Header -->
 <header>
-  <div class="header-icon">🔍</div>
   <div>
     <h1>Client Info</h1>
-    <p>Your device &amp; network snapshot</p>
   </div>
   <span id="consent-badge" class="consent-badge denied">Analytics: off</span>
 </header>
@@ -351,7 +359,6 @@
 
   <!-- Network / IP -->
   <div>
-    <div class="section-title">Network</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">🌐</span><span class="card-title">IP &amp; Location</span></div>
       <div class="info-row"><span class="info-label">Public IP</span><span class="info-value mono" id="ip"><span class="loading-dot"></span></span></div>
@@ -365,7 +372,6 @@
 
   <!-- Connection -->
   <div>
-    <div class="section-title">Connectivity</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">📡</span><span class="card-title">Connection</span></div>
       <div class="info-row"><span class="info-label">Type</span><span class="info-value" id="net-type">—</span></div>
@@ -379,7 +385,6 @@
 
   <!-- Browser -->
   <div>
-    <div class="section-title">Browser</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">🧭</span><span class="card-title">Browser &amp; Engine</span></div>
       <div class="info-row"><span class="info-label">Browser</span><span class="info-value" id="browser-name">—</span></div>
@@ -395,7 +400,6 @@
 
   <!-- OS / Platform -->
   <div>
-    <div class="section-title">Operating System</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">💻</span><span class="card-title">Platform</span></div>
       <div class="info-row"><span class="info-label">OS</span><span class="info-value" id="os">—</span></div>
@@ -407,7 +411,6 @@
 
   <!-- Hardware -->
   <div>
-    <div class="section-title">Hardware</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">⚙️</span><span class="card-title">Device &amp; Display</span></div>
       <div class="info-row"><span class="info-label">CPU Threads</span><span class="info-value" id="cpu">—</span></div>
@@ -425,7 +428,6 @@
 
   <!-- Capabilities -->
   <div>
-    <div class="section-title">Browser Capabilities</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">🛡️</span><span class="card-title">APIs &amp; Features</span></div>
       <div class="info-row"><span class="info-label">WebGL</span><span class="info-value" id="cap-webgl">—</span></div>
@@ -441,12 +443,19 @@
 
   <!-- Time -->
   <div>
-    <div class="section-title">Time</div>
     <div class="card">
       <div class="card-header"><span class="card-icon">🕐</span><span class="card-title">Date &amp; Time</span></div>
       <div class="info-row"><span class="info-label">Local Time</span><span class="info-value mono" id="local-time">—</span></div>
       <div class="info-row"><span class="info-label">UTC Offset</span><span class="info-value" id="utc-offset">—</span></div>
       <div class="info-row"><span class="info-label">Timezone (IANA)</span><span class="info-value" id="tz-iana">—</span></div>
+    </div>
+  </div>
+
+  <!-- URL Parameters -->
+  <div>
+    <div class="card" id="params-card">
+      <div class="card-header"><span class="card-icon">🔗</span><span class="card-title">GET Parameters</span></div>
+      <!-- Parameters will be inserted here by JS -->
     </div>
   </div>
 
@@ -464,9 +473,12 @@
       and the <strong>GDPR</strong>. You may change your choice at any time by tapping the badge in the header.
     </p>
   </div>
+  <div style="text-align: right;"><h2>TL:DR bare klik på den store flotte grønne knap!</h2></div>
   <div class="gdpr-actions">
+
     <button class="btn btn-secondary" id="btn-manage">Manage preferences</button>
     <button class="btn btn-secondary" id="btn-deny">Decline</button>
+
     <button class="btn btn-primary" id="btn-accept">Accept all</button>
   </div>
 </div>
@@ -500,7 +512,7 @@
 
     <div style="display:flex;gap:0.65rem;flex-wrap:wrap;margin-top:0.3rem;">
       <button class="btn btn-secondary" id="btn-pref-cancel" style="flex:0 0 auto">Cancel</button>
-      <button class="btn btn-primary" id="btn-pref-save" style="flex:1">Save preferences</button>
+      <button class="btn btn-primary" id="btn-pref-save" style="flex:1">Save</button>
     </div>
   </div>
 </div>
@@ -508,20 +520,12 @@
 <!-- Google Analytics (GA4) – loaded only after consent -->
 <script>
   // ─── GA4 Configuration ────────────────────────────────────────────────────
-  // TODO: Replace "G-XXXXXXXXXX" with your actual Google Analytics 4 Measurement ID
-  // before deploying. Find it in GA4 → Admin → Data Streams → your stream.
-  const GA_MEASUREMENT_ID = "G-XXXXXXXXXX";
+  const GA_MEASUREMENT_ID = "G-4SYXCYPE9K";
 
   // ─── Consent Management ───────────────────────────────────────────────────
   const CONSENT_KEY = "clientinfo_consent";
 
-  function getConsent() {
-    try { return localStorage.getItem(CONSENT_KEY); } catch { return null; }
-  }
 
-  function setConsent(val) {
-    try { localStorage.setItem(CONSENT_KEY, val); } catch {}
-  }
 
   function updateBadge(granted) {
     const b = document.getElementById("consent-badge");
@@ -546,7 +550,7 @@
     window.gtag = gtag;
     gtag("js", new Date());
     gtag("config", GA_MEASUREMENT_ID, {
-      anonymize_ip: true,
+
       allow_google_signals: true,
     });
     window._gtag = gtag;
@@ -558,40 +562,35 @@
   }
 
   function applyConsent(granted, skipBanner) {
-    setConsent(granted ? "granted" : "denied");
     updateBadge(granted);
     if (!skipBanner) document.getElementById("gdpr-banner").style.display = "none";
     if (granted) {
       loadGA();
       // GA4 will collect the client info automatically; we also send a custom event.
       window.addEventListener("clientInfoReady", function(e) {
+        console.log("client_info_collected:"+JSON.stringify(e.detail));
         sendAnalyticsEvent("client_info_collected", e.detail);
       }, { once: true });
     }
   }
 
   // ─── Banner logic ─────────────────────────────────────────────────────────
-  const stored = getConsent();
-  if (stored !== null) {
-    // Already decided – hide banner
-    document.getElementById("gdpr-banner").style.display = "none";
-    applyConsent(stored === "granted", true);
-  }
+
 
   document.getElementById("btn-accept").addEventListener("click", () => applyConsent(true));
   document.getElementById("btn-deny").addEventListener("click", () => applyConsent(false));
 
   document.getElementById("btn-manage").addEventListener("click", () => {
     const modal = document.getElementById("pref-modal");
-    const saved = getConsent();
-    document.getElementById("toggle-analytics").checked = saved === "granted";
+
+    document.getElementById("toggle-analytics").checked = false;
     modal.classList.add("open");
   });
 
   // Allow re-opening preferences via header badge
   document.getElementById("consent-badge").addEventListener("click", () => {
     const modal = document.getElementById("pref-modal");
-    document.getElementById("toggle-analytics").checked = getConsent() === "granted";
+    document.getElementById("toggle-analytics").checked = false;
     modal.classList.add("open");
     document.getElementById("gdpr-banner").style.display = "none";
   });
@@ -804,13 +803,51 @@
     }
   }
 
+  function populateUrlParams() {
+    const card = document.getElementById("params-card");
+    const params = new URLSearchParams(window.location.search);
+    const paramsObj = {};
+    let hasParams = false;
+
+    params.forEach((value, key) => {
+      hasParams = true;
+      const row = document.createElement("div");
+      row.className = "info-row";
+
+      const label = document.createElement("span");
+      label.className = "info-label";
+      label.textContent = key;
+
+      const val = document.createElement("span");
+      val.className = "info-value mono";
+      val.textContent = value;
+
+      row.appendChild(label);
+      row.appendChild(val);
+      card.appendChild(row);
+
+      // Add to object for analytics, prefixing to avoid conflicts
+      paramsObj['url_param_' + key] = value;
+    });
+
+    if (!hasParams) {
+      const row = document.createElement("div");
+      row.className = "info-row";
+      row.innerHTML = '<span class="info-label">No parameters found in URL.</span>';
+      card.appendChild(row);
+    }
+    
+    return paramsObj;
+  }
+
   // Run everything
   (async function init() {
     const syncInfo = populateSync();
+    const urlParams = populateUrlParams(); // Capture URL params
     const ipInfo = await populateIP();
 
     // Fire a custom event with all collected data (used by GA handler)
-    const allInfo = Object.assign({}, syncInfo, ipInfo);
+    const allInfo = Object.assign({}, syncInfo, ipInfo, urlParams);
     window.dispatchEvent(new CustomEvent("clientInfoReady", { detail: allInfo }));
   })();
 
