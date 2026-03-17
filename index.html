@@ -525,6 +525,11 @@
   // ─── Consent Management ───────────────────────────────────────────────────
   const CONSENT_KEY = "clientinfo_consent";
 
+  let consentGranted = false;
+  let infoReady = false;
+  let analyticsSent = false;
+  let clientInfoPayload = null;
+
 
 
   function updateBadge(granted) {
@@ -561,17 +566,22 @@
     window._gtag("event", name, params);
   }
 
+  function maybeSendClientInfoToGA() {
+    if (!consentGranted || !infoReady || analyticsSent) return;
+    loadGA();
+    console.log("client_info_collected:" + JSON.stringify(clientInfoPayload));
+    sendAnalyticsEvent("client_info_collected", clientInfoPayload);
+    analyticsSent = true;
+  }
+
   function applyConsent(granted, skipBanner) {
+    consentGranted = !!granted;
+
     updateBadge(granted);
     if (!skipBanner) document.getElementById("gdpr-banner").style.display = "none";
-    if (granted) {
-      loadGA();
-      // GA4 will collect the client info automatically; we also send a custom event.
-      window.addEventListener("clientInfoReady", function(e) {
-        console.log("client_info_collected:"+JSON.stringify(e.detail));
-        sendAnalyticsEvent("client_info_collected", e.detail);
-      }, { once: true });
-    }
+
+    // Only sends when BOTH consent and client info are ready.
+    maybeSendClientInfoToGA();
   }
 
   // ─── Banner logic ─────────────────────────────────────────────────────────
@@ -846,9 +856,10 @@
     const urlParams = populateUrlParams(); // Capture URL params
     const ipInfo = await populateIP();
 
-    // Fire a custom event with all collected data (used by GA handler)
-    const allInfo = Object.assign({}, syncInfo, ipInfo, urlParams);
-    window.dispatchEvent(new CustomEvent("clientInfoReady", { detail: allInfo }));
+    // Mark data as ready and attempt send if consent already exists.
+    clientInfoPayload = Object.assign({}, syncInfo, ipInfo, urlParams);
+    infoReady = true;
+    maybeSendClientInfoToGA();
   })();
 
   // Live clock
